@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLA Command Center — MTech Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111418;
+    --card: #161b22;
+    --border: #21262d;
+    --accent: #4d9fff;
+    --accent-strong: #74b4ff;
+    --accent-glow: rgba(77,159,255,0.35);
+    --accent2: #ff6b35;
+    --accent3: #4d9fff;
+    --warn: #f0b429;
+    --danger: #ff4545;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  /* ─── LIGHT THEME ─────────────────────────────────────────────── */
+  body.light-theme {
+    --bg: #f5f7fb;
+    --surface: #eef1f6;
+    --card: #ffffff;
+    --border: #e3e8ef;
+    --accent: #2563eb;
+    --accent-strong: #1d4ed8;
+    --accent-glow: rgba(37,99,235,0.2);
+    --accent2: #ea580c;
+    --accent3: #2563eb;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --text: #0f172a;
+    --muted: #5b6575;
+  }
+
+  body.light-theme body::before {
+    background-image:
+      linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
+  }
+
+  body.light-theme header {
+    background: rgba(255,255,255,0.85);
+  }
+
+  body.light-theme .drawer {
+    background: #f0f4fa;
+  }
+
+  body.light-theme .insight-popover {
+    background: #ffffff;
+  }
+
+  body.light-theme .brief-section {
+    background: #f8fafc;
+  }
+
+  body.light-theme .decision-item {
+    background: rgba(37,99,235,0.04);
+    border-color: rgba(37,99,235,0.15);
+  }
+
+  body.light-theme .health-item {
+    background: rgba(0,0,0,0.02);
+  }
+
+  body.light-theme .brief-section p,
+  body.light-theme .risk-row,
+  body.light-theme .decision-desc {
+    color: #374151;
+  }
+
+  /* ─── SMOOTH THEME TRANSITION ────────────────────────────────── */
+  body, .card, .kpi, header, .drawer, .brief-section,
+  .insight-popover, .health-item, .decision-item {
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; padding: 20px; max-width: 1300px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    background: rgba(22,27,34,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .logo {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--muted); }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  h1 em { color: var(--accent); font-style: normal; }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* KPI Row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .kpi:hover { transform: translateY(-2px); border-color: rgba(0,229,160,0.3); }
+
+  .kpi::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .kpi.green::after { background: var(--accent); }
+  .kpi.orange::after { background: var(--accent2); }
+  .kpi.blue::after { background: var(--accent3); }
+  .kpi.warn::after { background: var(--warn); }
+
+  .kpi-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 10px;
+  }
+
+  .kpi-value {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .kpi.green .kpi-value { color: var(--accent); }
+  .kpi.orange .kpi-value { color: var(--accent2); }
+  .kpi.blue .kpi-value { color: var(--accent3); }
+  .kpi.warn .kpi-value { color: var(--warn); }
+
+  .kpi-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  .kpi-delta {
+    font-size: 10px;
+    font-family: var(--mono);
+    margin-top: 4px;
+  }
+
+  .delta-up { color: var(--accent); }
+  .delta-down { color: var(--danger); }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 0 18px rgba(77,159,255,0.07);
+    border-color: rgba(77,159,255,0.18);
+  }
+
+  /* Theme toggle button */
+  .theme-toggle {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover {
+    border-color: rgba(77,159,255,0.4);
+    color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-title .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(255,107,53,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(255,107,53,0.25);
+  }
+
+  /* Ticket table */
+  .ticket-table { width: 100%; border-collapse: collapse; }
+
+  .ticket-table thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ticket-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding: 0 8px 10px;
+    font-weight: 400;
+  }
+
+  .ticket-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(33,38,45,0.5);
+    font-family: var(--mono);
+    vertical-align: middle;
+  }
+
+  .ticket-table tr:last-child td { border-bottom: none; }
+
+  .ticket-table tr { transition: background 0.15s; }
+  .ticket-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .priority-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .p1 { background: rgba(255,69,69,0.15); color: var(--danger); border: 1px solid rgba(255,69,69,0.3); }
+  .p2 { background: rgba(255,107,53,0.15); color: var(--accent2); border: 1px solid rgba(255,107,53,0.3); }
+  .p3 { background: rgba(240,180,41,0.15); color: var(--warn); border: 1px solid rgba(240,180,41,0.3); }
+  .p4 { background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.2); }
+
+  /* SLA bar */
+  .sla-bar-wrap { width: 100px; }
+
+  .sla-bar-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 3px;
+  }
+
+  .sla-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .sla-pct { font-size: 9px; color: var(--muted); }
+
+  /* Status dot */
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  .dot-safe { background: var(--accent); }
+  .dot-warn { background: var(--warn); animation: pulse 1.5s infinite; }
+  .dot-breach { background: var(--danger); animation: pulse 0.8s infinite; }
+
+  /* SLA Health panel */
+  .health-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .health-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .health-item:hover { background: rgba(255,255,255,0.04); }
+
+  .health-team { font-size: 12px; font-weight: 700; }
+  .health-sub { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+
+  .health-score {
+    font-size: 20px;
+    font-weight: 800;
+    font-family: var(--mono);
+  }
+
+  .score-good { color: var(--accent); }
+  .score-mid { color: var(--warn); }
+  .score-bad { color: var(--danger); }
+
+  /* Bottom row */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Breach reasons */
+  .breach-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .breach-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-family: var(--mono);
+  }
+
+  .breach-bar-track {
+    flex: 1;
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .breach-bar-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .breach-count {
+    font-size: 10px;
+    color: var(--muted);
+    width: 24px;
+    text-align: right;
+  }
+
+  .breach-label { color: var(--text); width: 160px; font-size: 10px; }
+
+  /* Alert ticker */
+  .alert-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .alert-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-family: var(--mono);
+    border: 1px solid;
+    align-items: flex-start;
+  }
+
+  .alert-item.crit {
+    background: rgba(255,69,69,0.06);
+    border-color: rgba(255,69,69,0.2);
+    color: #ff8080;
+  }
+
+  .alert-item.warn {
+    background: rgba(240,180,41,0.06);
+    border-color: rgba(240,180,41,0.2);
+    color: var(--warn);
+  }
+
+  .alert-item.ok {
+    background: rgba(0,229,160,0.05);
+    border-color: rgba(0,229,160,0.15);
+    color: var(--accent);
+  }
+
+  .alert-icon { font-size: 12px; flex-shrink: 0; }
+  .alert-time { color: var(--muted); flex-shrink: 0; }
+
+  /* Mini chart */
+  .mini-chart-wrap { position: relative; height: 90px; margin-top: 8px; }
+
+  canvas { display: block; }
+
+  /* Tooltip */
+  .tooltip-style {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text);
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+  }
+
+  /* Toggle controls */
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .ctrl-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .ctrl-btn.active, .ctrl-btn:hover {
+    background: rgba(0,229,160,0.1);
+    border-color: rgba(0,229,160,0.3);
+    color: var(--accent);
+  }
+
+  /* ─── PRODUCT BRIEF DRAWER ─────────────────────────────────────── */
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .drawer-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .drawer {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 520px;
+    background: #0e1117;
+    border-left: 1px solid var(--border);
+    z-index: 201;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto;
+    padding: 28px;
+  }
+
+  .drawer.open { transform: translateX(0); }
+
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .drawer-title {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .drawer-heading {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .close-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .close-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* Brief sections */
+  .brief-section {
+    margin-bottom: 22px;
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    animation: fadeIn 0.4s ease both;
+  }
+
+  .brief-section:nth-child(1) { animation-delay: 0.05s; }
+  .brief-section:nth-child(2) { animation-delay: 0.1s; }
+  .brief-section:nth-child(3) { animation-delay: 0.15s; }
+  .brief-section:nth-child(4) { animation-delay: 0.2s; }
+  .brief-section:nth-child(5) { animation-delay: 0.25s; }
+
+  .brief-section-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brief-section-label .section-icon {
+    width: 20px; height: 20px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .label-decision .section-icon { background: rgba(77,159,255,0.12); color: var(--accent3); }
+  .label-decision { color: var(--accent3); }
+
+  .decision-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .decision-item {
+    padding: 12px 14px;
+    background: rgba(77,159,255,0.04);
+    border: 1px solid rgba(77,159,255,0.12);
+    border-left: 3px solid var(--accent3);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .decision-trigger {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--accent3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .decision-desc {
+    font-size: 11px;
+    color: #c9d1d9;
+    line-height: 1.65;
+  }
+
+  /* brief-section stagger — extend to 6th child for Decision Layer */
+  .brief-section:nth-child(4) { animation-delay: 0.2s; }
+  .brief-section:nth-child(5) { animation-delay: 0.25s; }
+  .brief-section:nth-child(6) { animation-delay: 0.3s; }
+
+  .label-solution .section-icon { background: rgba(0,229,160,0.12); color: var(--accent); }
+  .label-metrics .section-icon { background: rgba(77,159,255,0.12); color: var(--accent3); }
+  .label-risks .section-icon { background: rgba(240,180,41,0.12); color: var(--warn); }
+  .label-impact .section-icon { background: rgba(255,107,53,0.12); color: var(--accent2); }
+
+  .label-problem { color: var(--danger); }
+  .label-solution { color: var(--accent); }
+  .label-metrics { color: var(--accent3); }
+  .label-risks { color: var(--warn); }
+  .label-impact { color: var(--accent2); }
+
+  .brief-section p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #c9d1d9;
+  }
+
+  .metric-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .metric-chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid;
+  }
+
+  .chip-green { background: rgba(0,229,160,0.08); color: var(--accent); border-color: rgba(0,229,160,0.2); }
+  .chip-blue { background: rgba(77,159,255,0.08); color: var(--accent3); border-color: rgba(77,159,255,0.2); }
+  .chip-orange { background: rgba(255,107,53,0.08); color: var(--accent2); border-color: rgba(255,107,53,0.2); }
+  .chip-warn { background: rgba(240,180,41,0.08); color: var(--warn); border-color: rgba(240,180,41,0.2); }
+
+  .risk-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: #c9d1d9;
+    line-height: 1.5;
+  }
+
+  .risk-row:last-child { margin-bottom: 0; }
+
+  .risk-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  /* AI Intelligence Layer button — premium */
+  .brief-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(77,159,255,0.5);
+    background: linear-gradient(135deg, rgba(77,159,255,0.18) 0%, rgba(77,159,255,0.08) 100%);
+    color: var(--accent-strong);
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 0 0 var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  .brief-btn:hover {
+    background: linear-gradient(135deg, rgba(77,159,255,0.28) 0%, rgba(77,159,255,0.14) 100%);
+    border-color: rgba(77,159,255,0.8);
+    box-shadow: 0 0 16px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+    color: var(--accent-strong);
+  }
+
+  .brief-btn:active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+
+  .brief-btn-icon { font-size: 13px; }
+
+  /* ─── CONTEXTUAL ✦ INSIGHT ICONS ────────────────────────────────── */
+  .insight-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    background: rgba(77,159,255,0.1);
+    border: 1px solid rgba(77,159,255,0.25);
+    color: var(--accent3);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: 6px;
+    flex-shrink: 0;
+  }
+
+  .insight-btn:hover {
+    background: rgba(77,159,255,0.2);
+    border-color: rgba(77,159,255,0.5);
+    transform: scale(1.1);
+  }
+
+  /* Insight popover */
+  .insight-popover {
+    position: fixed;
+    width: 300px;
+    background: #0e1117;
+    border: 1px solid rgba(77,159,255,0.3);
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 150;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px) scale(0.97);
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .insight-popover.visible {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+  }
+
+  .pop-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    color: var(--accent3);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pop-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .pop-row {
+    margin-bottom: 8px;
+  }
+
+  .pop-row-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .pop-row-val {
+    font-size: 11px;
+    color: #c9d1d9;
+    line-height: 1.5;
+  }
+
+  .pop-row-val.accent { color: var(--accent); font-family: var(--mono); }
+  .pop-row-val.blue { color: var(--accent3); font-family: var(--mono); }
+
+  .pop-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .pop-close:hover { color: var(--text); background: var(--border); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  footer span { color: var(--accent); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     RESPONSIVE — TABLET (≤ 900px)
+  ═══════════════════════════════════════════════════════════════ */
+  @media (max-width: 900px) {
+    .wrapper { padding: 14px; }
+    .kpi-row    { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .main-grid  { grid-template-columns: 1fr; }
+    .bottom-row { grid-template-columns: 1fr 1fr; }
+    header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+    h1 { font-size: 18px; }
+    .drawer { width: 88vw; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     RESPONSIVE — MOBILE (≤ 600px)
+  ═══════════════════════════════════════════════════════════════ */
+  @media (max-width: 600px) {
+    .wrapper { padding: 10px; }
+
+    /* Header */
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 10px;
+    }
+    h1 { font-size: 17px; }
+    .logo { font-size: 11px; }
+    .brief-btn { font-size: 10px; padding: 5px 10px; }
+    .header-right { width: 100%; justify-content: space-between; }
+    #clock { display: none; }
+    .live-badge { font-size: 10px; padding: 3px 8px; }
+
+    /* KPI: 2-col grid */
+    .kpi-row {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .kpi        { padding: 14px 12px; }
+    .kpi-value  { font-size: 26px; }
+    .kpi-label  { font-size: 9px; margin-bottom: 6px; }
+    .kpi-sub    { font-size: 10px; }
+    .kpi-delta  { font-size: 9px; }
+
+    /* Grids: single column */
+    .main-grid  { grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
+    .bottom-row { grid-template-columns: 1fr; gap: 12px; }
+    .card       { padding: 14px; border-radius: 10px; }
+
+    /* ── Ticket table → card layout ── */
+    .ticket-table thead { display: none; }
+    .ticket-table,
+    .ticket-table tbody,
+    .ticket-table tr,
+    .ticket-table td { display: block; width: 100%; }
+
+    .ticket-table tr {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      padding: 10px 12px;
+    }
+    .ticket-table tr:hover td { background: transparent; }
+    .ticket-table td { padding: 2px 0; border: none; font-size: 11px; }
+
+    /* Row 1: ticket ID + priority badge inline */
+    .ticket-table td:nth-child(1) {
+      display: inline;
+      color: var(--accent3);
+      font-size: 10px;
+      margin-right: 8px;
+    }
+    .ticket-table td:nth-child(2) { display: inline; }
+
+    /* Row 2: issue description */
+    .ticket-table td:nth-child(3) {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: normal;
+      overflow: visible;
+      max-width: 100%;
+    }
+
+    /* Row 3: agent + SLA bar side by side */
+    .ticket-table td:nth-child(4) {
+      display: inline-block;
+      width: 48%;
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      vertical-align: top;
+    }
+    .ticket-table td:nth-child(5) {
+      display: inline-block;
+      width: 48%;
+      margin-top: 6px;
+      vertical-align: top;
+    }
+    .sla-bar-wrap { width: 100%; }
+
+    /* Row 4: status */
+    .ticket-table td:nth-child(6) {
+      display: block;
+      margin-top: 6px;
+      font-size: 10px;
+    }
+
+    /* Card title */
+    .card-title { flex-wrap: wrap; gap: 8px; font-size: 10px; }
+    .controls   { gap: 4px; }
+    .ctrl-btn   { font-size: 9px; padding: 3px 8px; }
+
+    /* Team health */
+    .health-item  { padding: 10px 12px; }
+    .health-team  { font-size: 11px; }
+    .health-score { font-size: 18px; }
+
+    /* Breach causes */
+    .breach-label { font-size: 9px; width: 130px; }
+
+    /* Drawer: bottom sheet on mobile */
+    .drawer {
+      width: 100vw;
+      border-left: none;
+      border-top: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      top: auto;
+      bottom: 0;
+      height: 90vh;
+    }
+
+    /* Popover: full width */
+    .insight-popover {
+      width: calc(100vw - 32px);
+      left: 16px !important;
+    }
+
+    /* Trend chart */
+    .mini-chart-wrap { height: 80px; }
+    #trendChart { width: 100% !important; }
+
+    /* Alerts */
+    .alert-item { font-size: 10px; }
+
+    footer { font-size: 9px; padding: 14px; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     RESPONSIVE — SMALL MOBILE (≤ 380px)
+  ═══════════════════════════════════════════════════════════════ */
+  @media (max-width: 380px) {
+    .kpi-row    { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .kpi-value  { font-size: 22px; }
+    .brief-btn .brief-btn-icon { display: none; }
+    .brief-btn  { padding: 5px 8px; font-size: 9px; }
+    h1          { font-size: 15px; }
+  }
+
+  /* Shimmer animation on load */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kpi { animation: fadeIn 0.4s ease both; }
+  .kpi:nth-child(1) { animation-delay: 0.0s; }
+  .kpi:nth-child(2) { animation-delay: 0.08s; }
+  .kpi:nth-child(3) { animation-delay: 0.16s; }
+  .kpi:nth-child(4) { animation-delay: 0.24s; }
+  .card { animation: fadeIn 0.5s ease 0.2s both; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">MTech Labs <span>/ QA Division</span></div>
+    <h1>SLA <em>Command Center</em></h1>
+    <div class="header-right" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <button class="brief-btn" onclick="openDrawer()">
+        <span class="brief-btn-icon">✦</span> AI Intelligence Layer
+      </button>
+      <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="clock"></div>
+    </div>
+  </header>
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi green">
+      <div class="kpi-label">SLA Compliance Rate</div>
+      <div class="kpi-value" id="kpi-compliance">94.2%</div>
+      <div class="kpi-sub">Target: ≥ 95%</div>
+      <div class="kpi-delta delta-down">▼ 0.8% vs yesterday</div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-label">Active Breach Risk</div>
+      <div class="kpi-value" id="kpi-breach">7</div>
+      <div class="kpi-sub">Tickets approaching SLA</div>
+      <div class="kpi-delta delta-down">▲ 3 since 2h ago</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Avg Handle Time</div>
+      <div class="kpi-value">6.4<span style="font-size:18px">m</span></div>
+      <div class="kpi-sub">Target: ≤ 7 min</div>
+      <div class="kpi-delta delta-up">▼ 0.3m improved</div>
+    </div>
+    <div class="kpi warn">
+      <div class="kpi-label">Open P1 Tickets</div>
+      <div class="kpi-value" id="kpi-p1">3</div>
+      <div class="kpi-sub">Requires immediate action</div>
+      <div class="kpi-delta delta-down">▲ 1 new in last 30min</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- Ticket Queue -->
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center">Live Ticket Queue <button class="insight-btn" onclick="showInsight(event,'ticket')">✦</button></span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="badge">7 at risk</div>
+          <div class="controls">
+            <button class="ctrl-btn active" onclick="filterTickets('all',this)">All</button>
+            <button class="ctrl-btn" onclick="filterTickets('breach',this)">At Risk</button>
+            <button class="ctrl-btn" onclick="filterTickets('p1',this)">P1</button>
+          </div>
+        </div>
+      </div>
+      <table class="ticket-table" id="ticket-table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th>
+            <th>Priority</th>
+            <th>Issue</th>
+            <th>Agent</th>
+            <th>SLA Consumed</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-body"></tbody>
+      </table>
+    </div>
+
+    <!-- SLA Health by Team -->
+    <div class="card">
+      <div class="card-title"><span style="display:flex;align-items:center">Team SLA Health <button class="insight-btn" onclick="showInsight(event,'team')">✦</button></span></div>
+      <div class="health-list" id="health-list"></div>
+    </div>
+
+  </div>
+
+  <!-- Bottom row -->
+  <div class="bottom-row">
+
+    <!-- Breach Root Causes -->
+    <div class="card">
+      <div class="card-title"><span style="display:flex;align-items:center">Top Breach Causes <button class="insight-btn" onclick="showInsight(event,'breach')">✦</button></span> <span style="color:var(--accent2)">(This Week)</span></div>
+      <div class="breach-list" id="breach-list"></div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div class="card">
+      <div class="card-title"><span style="display:flex;align-items:center">7-Day SLA Compliance Trend <button class="insight-btn" onclick="showInsight(event,'trend')">✦</button></span></div>
+      <div class="mini-chart-wrap">
+        <canvas id="trendChart" width="320" height="90" style="max-width:100%"></canvas>
+      </div>
+    </div>
+
+    <!-- AI Alerts -->
+    <div class="card">
+      <div class="card-title"><span style="display:flex;align-items:center">⚡ AI Alert Feed <button class="insight-btn" onclick="showInsight(event,'alerts')">✦</button></span></div>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+
+  </div>
+
+  <footer>Built by <span>Mohit</span> · MTech Labs · SLA Management QA Portfolio</footer>
+
+</div>
+
+<!-- ─── PRODUCT BRIEF DRAWER ─────────────────────────────────────────── -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title">✦ AI Intelligence Layer</div>
+      <div class="drawer-heading">SLA Command Center<br/>Intelligence Brief</div>
+    </div>
+    <button class="close-btn" onclick="closeDrawer()">✕</button>
+  </div>
+
+  <!-- Problem -->
+  <div class="brief-section">
+    <div class="brief-section-label label-problem">
+      <span class="section-icon">⚠</span> User Problem
+    </div>
+    <p>QA managers and team leads in high-volume support operations have no real-time visibility into which tickets are approaching SLA breach. They rely on end-of-shift manual reports or reactive escalations — meaning breaches are discovered after they happen, not before. The cost: missed SLAs, client penalties, and reactive firefighting instead of proactive quality management.</p>
+  </div>
+
+  <!-- AI Solution -->
+  <div class="brief-section">
+    <div class="brief-section-label label-solution">
+      <span class="section-icon">⚡</span> AI Solution
+    </div>
+    <p>A rule-based + ML-assisted SLA monitoring engine that continuously evaluates ticket queues using AHT history, elapsed time, and agent load signals to compute breach probability scores. Priority classification uses confidence-based NLP inference on issue descriptions — suggestions are surfaced to agents rather than applied silently, with human override available at every decision point. Root cause categorisation is semi-automated: the system proposes a category at ticket close, which a QA analyst can accept, edit, or reject. Leadership summaries are generated from structured data, not raw AI generation, ensuring accuracy over fluency. The system is deliberately not presented as infallible — low-confidence classifications are flagged visually so agents know when to apply manual judgement.</p>
+  </div>
+
+  <!-- Decision Layer -->
+  <div class="brief-section">
+    <div class="brief-section-label label-decision">
+      <span class="section-icon">⚙</span> Decision Layer
+    </div>
+    <div class="decision-list">
+      <div class="decision-item">
+        <div class="decision-trigger">Auto-Escalation</div>
+        <div class="decision-desc">P1 tickets reaching 75% SLA consumption without an agent update are automatically escalated to the team lead queue with a pre-filled context summary. No manual intervention required; escalation log is preserved for audit.</div>
+      </div>
+      <div class="decision-item">
+        <div class="decision-trigger">Smart Reassignment Recommendation</div>
+        <div class="decision-desc">When a ticket is at breach risk and the assigned agent's current load exceeds threshold, the system recommends reassignment to the next available agent ranked by AHT and current queue depth. Supervisor confirms before action is taken.</div>
+      </div>
+      <div class="decision-item">
+        <div class="decision-trigger">Priority Correction Suggestion</div>
+        <div class="decision-desc">Incoming tickets are scored against a trained classifier using issue description keywords and historical resolution times. When predicted priority differs from agent-assigned priority by one or more levels, a correction suggestion is surfaced inline — accepted or dismissed by the agent.</div>
+      </div>
+      <div class="decision-item">
+        <div class="decision-trigger">Coaching Trigger</div>
+        <div class="decision-desc">Agents with ≥3 SLA-risk tickets in a rolling 7-day window are automatically flagged for a coaching session. The system generates a structured performance brief — breach pattern, ticket types, time-of-day concentration — shared with the QA lead, not the agent directly.</div>
+      </div>
+      <div class="decision-item">
+        <div class="decision-trigger">Peak-Hour Queue Balancing</div>
+        <div class="decision-desc">Historically high-volume time windows (identified from 90-day ticket data) trigger a pre-emptive queue redistribution alert 30 minutes before peak. Team leads receive a recommended staffing adjustment; system does not act autonomously on workforce allocation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Metrics -->
+  <div class="brief-section">
+    <div class="brief-section-label label-metrics">
+      <span class="section-icon">📊</span> Success Metrics
+    </div>
+    <div class="metric-chips">
+      <span class="metric-chip chip-green">SLA Compliance ≥ 95%</span>
+      <span class="metric-chip chip-blue">Breach detection time &lt; 5 min</span>
+      <span class="metric-chip chip-orange">Manual reporting time → 0</span>
+      <span class="metric-chip chip-warn">RCA cycle: 24h → 2h</span>
+      <span class="metric-chip chip-green">P1 response adherence 100%</span>
+      <span class="metric-chip chip-blue">Agent coaching trigger accuracy ≥ 90%</span>
+    </div>
+  </div>
+
+  <!-- Risks & Mitigations -->
+  <div class="brief-section">
+    <div class="brief-section-label label-risks">
+      <span class="section-icon">🛡</span> Risks & Mitigations
+    </div>
+    <div class="risk-row">
+      <div class="risk-dot" style="background:var(--danger)"></div>
+      <div><strong style="color:var(--text)">Data staleness</strong> — Mitigated by real-time API polling every 60s with WebSocket fallback for critical P1 tickets.</div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-dot" style="background:var(--warn)"></div>
+      <div><strong style="color:var(--text)">Alert fatigue</strong> — Tiered alert system (Critical / Warning / Info) with suppression logic for repeated low-priority signals.</div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-dot" style="background:var(--warn)"></div>
+      <div><strong style="color:var(--text)">Wrong priority tagging</strong> — AI auto-suggests priority level on ticket intake using NLP on issue description; human override preserved.</div>
+    </div>
+    <div class="risk-row">
+      <div class="risk-dot" style="background:var(--accent3)"></div>
+      <div><strong style="color:var(--text)">Adoption resistance</strong> — Minimal onboarding friction; no login required for team leads. Mobile-responsive for on-floor use.</div>
+    </div>
+  </div>
+
+  <!-- Business Impact -->
+  <div class="brief-section">
+    <div class="brief-section-label label-impact">
+      <span class="section-icon">🚀</span> Business Impact
+    </div>
+    <p>Based on a 500-ticket/day operation with 6% current breach rate: reducing breaches to &lt;1% saves an estimated ₹8–12L/year in penalty clauses and re-work costs. QA analyst capacity freed from manual reporting = ~10 hrs/week redirected to coaching and process improvement. Leadership reporting time reduced from 2 hrs to 15 min daily.</p>
+  </div>
+
+</div>
+
+<!-- ─── INSIGHT POPOVER ───────────────────────────────────────────────── -->
+<div class="insight-popover" id="insightPop">
+  <button class="pop-close" onclick="closePopover()">✕</button>
+  <div class="pop-label">✦ Product Insight</div>
+  <div class="pop-title" id="pop-title"></div>
+  <div id="pop-body"></div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────
+
+// Full ticket pool — 20 tickets, shown 8 at a time, rotated live
+const ticketPool = [
+  { id: 'TKT-4821', priority: 'P1', issue: 'Payment gateway timeout',         agent: 'Rahul K.',   pct: 92, status: 'breach' },
+  { id: 'TKT-4819', priority: 'P1', issue: 'Account login failure',            agent: 'Sneha M.',   pct: 85, status: 'breach' },
+  { id: 'TKT-4835', priority: 'P1', issue: 'Data sync failure — CRM',          agent: 'Arjun T.',   pct: 78, status: 'warn'   },
+  { id: 'TKT-4842', priority: 'P2', issue: 'Report export broken',             agent: 'Priya S.',   pct: 70, status: 'warn'   },
+  { id: 'TKT-4851', priority: 'P2', issue: 'Notification delay > 5 min',       agent: 'Vikram N.',  pct: 65, status: 'warn'   },
+  { id: 'TKT-4860', priority: 'P3', issue: 'UI rendering bug — mobile',        agent: 'Anita R.',   pct: 40, status: 'safe'   },
+  { id: 'TKT-4872', priority: 'P3', issue: 'Password reset email delay',       agent: 'Kiran L.',   pct: 30, status: 'safe'   },
+  { id: 'TKT-4883', priority: 'P4', issue: 'Dark mode toggle flicker',         agent: 'Deepa M.',   pct: 18, status: 'safe'   },
+  { id: 'TKT-4891', priority: 'P1', issue: 'API rate limit breach — prod',     agent: 'Suresh B.',  pct: 96, status: 'breach' },
+  { id: 'TKT-4897', priority: 'P2', issue: 'Bulk email send failure',          agent: 'Meera J.',   pct: 74, status: 'warn'   },
+  { id: 'TKT-4903', priority: 'P2', issue: 'Dashboard charts not loading',     agent: 'Tarun V.',   pct: 68, status: 'warn'   },
+  { id: 'TKT-4911', priority: 'P3', issue: 'Export CSV encoding issue',        agent: 'Pooja R.',   pct: 45, status: 'safe'   },
+  { id: 'TKT-4918', priority: 'P1', issue: 'SSO authentication loop',          agent: 'Neeraj S.',  pct: 88, status: 'breach' },
+  { id: 'TKT-4924', priority: 'P3', issue: 'Tooltip overlap — settings page',  agent: 'Kavya M.',   pct: 22, status: 'safe'   },
+  { id: 'TKT-4930', priority: 'P2', issue: 'Invoice PDF generation timeout',   agent: 'Rohit D.',   pct: 61, status: 'warn'   },
+  { id: 'TKT-4937', priority: 'P4', issue: 'Favicon missing on login page',    agent: 'Asha T.',    pct: 10, status: 'safe'   },
+  { id: 'TKT-4942', priority: 'P2', issue: 'Webhook retry flood — Slack',      agent: 'Imran K.',   pct: 72, status: 'warn'   },
+  { id: 'TKT-4948', priority: 'P3', issue: 'Timezone mismatch — scheduling',   agent: 'Divya N.',   pct: 35, status: 'safe'   },
+  { id: 'TKT-4955', priority: 'P1', issue: 'DB connection pool exhausted',     agent: 'Ravi P.',    pct: 81, status: 'breach' },
+  { id: 'TKT-4961', priority: 'P4', issue: 'Stale cache on user profile',      agent: 'Shruti A.',  pct: 14, status: 'safe'   },
+];
+
+let tickets = ticketPool.slice(0, 8);
+
+const teams = [
+  { name: 'Inbound Voice',   sub: '142 tickets · 6 agents', score: 96, tag: 'good' },
+  { name: 'Email Support',   sub: '89 tickets · 4 agents',  score: 91, tag: 'good' },
+  { name: 'Chat Support',    sub: '203 tickets · 9 agents', score: 87, tag: 'mid'  },
+  { name: 'Enterprise Desk', sub: '41 tickets · 3 agents',  score: 78, tag: 'mid'  },
+  { name: 'Social Media',    sub: '67 tickets · 3 agents',  score: 62, tag: 'bad'  },
+];
+
+const breachCauses = [
+  { label: 'Wrong Priority Tagging',    count: 18, max: 18 },
+  { label: 'Agent Unresponsive',        count: 14, max: 18 },
+  { label: 'Complex Resolution Path',   count: 11, max: 18 },
+  { label: 'Queue Overflow / Peak',     count: 9,  max: 18 },
+  { label: 'Tool/System Downtime',      count: 6,  max: 18 },
+];
+
+// Full alert pool — 12 alerts, shown 5 at a time, rotated live
+const alertPool = [
+  { level: 'crit', icon: '🔴', msg: 'TKT-4821 BREACHED SLA — P1 unresolved for 4h 12m' },
+  { level: 'crit', icon: '🔴', msg: 'TKT-4819 SLA breach in < 15 min — escalate now' },
+  { level: 'warn', icon: '🟡', msg: 'Social Media team below 65% SLA compliance today' },
+  { level: 'warn', icon: '🟡', msg: '3 P2 tickets pending > 2h without agent update' },
+  { level: 'ok',   icon: '🟢', msg: 'Inbound Voice hit 96% compliance — week high' },
+  { level: 'crit', icon: '🔴', msg: 'TKT-4891 API rate limit breach — auto-escalated to lead' },
+  { level: 'warn', icon: '🟡', msg: 'TKT-4918 SSO loop unresolved — approaching P1 SLA window' },
+  { level: 'ok',   icon: '🟢', msg: 'TKT-4860 resolved within SLA — closed by Anita R.' },
+  { level: 'warn', icon: '🟡', msg: 'Chat Support AHT up 1.4m this hour — above threshold' },
+  { level: 'ok',   icon: '🟢', msg: 'Coaching trigger fired for Vikram N. — 4 risk tickets (7d)' },
+  { level: 'crit', icon: '🔴', msg: 'TKT-4955 DB pool exhausted — P1 breach imminent' },
+  { level: 'warn', icon: '🟡', msg: 'Peak-hour window in 28 min — queue rebalance recommended' },
+];
+
+let alertOffset = 0;
+let alerts = alertPool.slice(0, 5).map((a, i) => ({
+  ...a, time: [2, 8, 14, 22, 35][i] + 'm ago'
+}));
+
+const trendData   = [88.4, 91.2, 90.5, 93.1, 94.8, 93.9, 94.2];
+const trendLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// ─── LIVE SIMULATION ──────────────────────────────────────────────────────
+let ticketOffset = 0;
+let simElapsed = 0;
+
+function simulateLive() {
+  simElapsed++;
+
+  // Every 12s: rotate one ticket from the pool into the visible list
+  if (simElapsed % 2 === 0) {
+    ticketOffset = (ticketOffset + 1) % (ticketPool.length - 7);
+    tickets = ticketPool.slice(ticketOffset, ticketOffset + 8);
+    // Slightly drift SLA % on at-risk tickets
+    tickets = tickets.map(t => ({
+      ...t,
+      pct: t.status !== 'safe'
+        ? Math.min(99, t.pct + Math.floor(Math.random() * 3))
+        : t.pct
+    }));
+    renderTickets('all');
+  }
+
+  // Every 18s: rotate one new alert in from pool
+  if (simElapsed % 3 === 0) {
+    alertOffset = (alertOffset + 1) % alertPool.length;
+    const fresh = { ...alertPool[alertOffset], time: 'just now' };
+    alerts = [fresh, ...alerts.slice(0, 4)].map((a, i) => ({
+      ...a,
+      time: i === 0 ? 'just now' : (i * 7) + 'm ago'
+    }));
+    renderAlerts();
+  }
+
+  // Every 30s: nudge one team score slightly
+  if (simElapsed % 5 === 0) {
+    const idx = Math.floor(Math.random() * teams.length);
+    const delta = (Math.random() > 0.4 ? 1 : -1) * Math.floor(Math.random() * 2 + 1);
+    teams[idx].score = Math.max(55, Math.min(99, teams[idx].score + delta));
+    teams[idx].tag = teams[idx].score >= 88 ? 'good' : teams[idx].score >= 72 ? 'mid' : 'bad';
+    renderHealth();
+  }
+
+  // P1 open count drifts ±1
+  const p1 = tickets.filter(t => t.priority === 'P1').length;
+  document.getElementById('kpi-p1').textContent = p1;
+
+  // Breach risk count
+  const atRisk = tickets.filter(t => t.status !== 'safe').length;
+  document.getElementById('kpi-breach').textContent = atRisk;
+}
+
+setInterval(simulateLive, 6000);
+
+// ─── RENDER TICKETS ───────────────────────────────────────────────────────
+function getBarColor(pct) {
+  if (pct >= 85) return '#ff4545';
+  if (pct >= 65) return '#f0b429';
+  return '#00e5a0';
+}
+
+function renderTickets(filter) {
+  const tbody = document.getElementById('ticket-body');
+  const filtered = filter === 'all' ? tickets
+    : filter === 'breach' ? tickets.filter(t => t.status !== 'safe')
+    : tickets.filter(t => t.priority === 'P1');
+
+  tbody.innerHTML = filtered.map(t => {
+    const dotClass = t.status === 'breach' ? 'dot-breach' : t.status === 'warn' ? 'dot-warn' : 'dot-safe';
+    const statusLabel = t.status === 'breach' ? 'BREACHED' : t.status === 'warn' ? 'AT RISK' : 'ON TRACK';
+    const color = getBarColor(t.pct);
+    return `<tr>
+      <td style="color:var(--accent3)">${t.id}</td>
+      <td><span class="priority-badge ${t.priority.toLowerCase()}">${t.priority}</span></td>
+      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.issue}</td>
+      <td style="color:var(--muted)">${t.agent}</td>
+      <td>
+        <div class="sla-bar-wrap">
+          <div class="sla-bar-track"><div class="sla-bar-fill" style="width:${t.pct}%;background:${color}"></div></div>
+          <div class="sla-pct">${t.pct}% consumed</div>
+        </div>
+      </td>
+      <td><span class="status-dot ${dotClass}"></span>${statusLabel}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTickets(filter, btn) {
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTickets(filter);
+}
+
+// ─── RENDER TEAM HEALTH ───────────────────────────────────────────────────
+function renderHealth() {
+  document.getElementById('health-list').innerHTML = teams.map(t => {
+    const cls = t.tag === 'good' ? 'score-good' : t.tag === 'mid' ? 'score-mid' : 'score-bad';
+    return `<div class="health-item">
+      <div>
+        <div class="health-team">${t.name}</div>
+        <div class="health-sub">${t.sub}</div>
+      </div>
+      <div class="health-score ${cls}">${t.score}%</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── RENDER BREACH CAUSES ────────────────────────────────────────────────
+function renderBreaches() {
+  document.getElementById('breach-list').innerHTML = breachCauses.map(b => {
+    const w = Math.round((b.count / b.max) * 100);
+    return `<div class="breach-item">
+      <div class="breach-label">${b.label}</div>
+      <div class="breach-bar-track"><div class="breach-bar-fill" style="width:${w}%"></div></div>
+      <div class="breach-count">${b.count}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── RENDER ALERTS ────────────────────────────────────────────────────────
+function renderAlerts() {
+  document.getElementById('alert-list').innerHTML = alerts.map(a =>
+    `<div class="alert-item ${a.level}">
+      <span class="alert-icon">${a.icon}</span>
+      <span style="flex:1">${a.msg}</span>
+      <span class="alert-time">${a.time}</span>
+    </div>`
+  ).join('');
+}
+
+// ─── TREND CHART ──────────────────────────────────────────────────────────
+function drawChart() {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+  // Use actual rendered width for mobile
+  const W = canvas.offsetWidth || canvas.width;
+  canvas.width = W;
+  const H = canvas.height;
+  const pad = { left: 28, right: 10, top: 10, bottom: 22 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const min = 85, max = 100;
+  const xs = trendData.map((_, i) => pad.left + (i / (trendData.length - 1)) * cw);
+  const ys = trendData.map(v => pad.top + ch - ((v - min) / (max - min)) * ch);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(33,38,45,0.8)';
+  ctx.lineWidth = 1;
+  [85, 90, 95, 100].forEach(val => {
+    const y = pad.top + ch - ((val - min) / (max - min)) * ch;
+    ctx.beginPath();
+    ctx.setLineDash([3, 5]);
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(125,133,144,0.6)';
+    ctx.font = '8px DM Mono';
+    ctx.fillText(val + '%', 0, y + 3);
+  });
+
+  // Target line (95%)
+  const targetY = pad.top + ch - ((95 - min) / (max - min)) * ch;
+  ctx.strokeStyle = 'rgba(0,229,160,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.left, targetY);
+  ctx.lineTo(W - pad.right, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Fill gradient
+  const grad = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+  grad.addColorStop(0, 'rgba(0,229,160,0.2)');
+  grad.addColorStop(1, 'rgba(0,229,160,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(xs[0], ys[0]);
+  for (let i = 1; i < xs.length; i++) {
+    const mx = (xs[i - 1] + xs[i]) / 2;
+    ctx.bezierCurveTo(mx, ys[i - 1], mx, ys[i], xs[i], ys[i]);
+  }
+  ctx.lineTo(xs[xs.length - 1], H - pad.bottom);
+  ctx.lineTo(xs[0], H - pad.bottom);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#00e5a0';
+  ctx.lineWidth = 2;
+  ctx.moveTo(xs[0], ys[0]);
+  for (let i = 1; i < xs.length; i++) {
+    const mx = (xs[i - 1] + xs[i]) / 2;
+    ctx.bezierCurveTo(mx, ys[i - 1], mx, ys[i], xs[i], ys[i]);
+  }
+  ctx.stroke();
+
+  // Dots
+  xs.forEach((x, i) => {
+    ctx.beginPath();
+    ctx.arc(x, ys[i], 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#00e5a0';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, ys[i], 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#0a0c10';
+    ctx.fill();
+
+    // Labels
+    ctx.fillStyle = 'rgba(125,133,144,0.8)';
+    ctx.font = '8px DM Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(trendLabels[i], x, H - pad.bottom + 12);
+  });
+}
+
+// ─── CLOCK ────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+renderTickets('all');
+renderHealth();
+renderBreaches();
+renderAlerts();
+drawChart();
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─── DRAWER ───────────────────────────────────────────────────────────────
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─── INSIGHT POPOVERS ─────────────────────────────────────────────────────
+const insightData = {
+  ticket: {
+    title: 'Live Ticket Queue',
+    problem: 'Agents and QA leads had no real-time view of SLA % consumed per ticket — breaches were discovered post-shift.',
+    solution: 'AI computes SLA consumption in real-time using ticket creation timestamp + priority SLA window. Color-coded bars give instant triage signal.',
+    metric: 'Breach detection latency < 5 min',
+    metricClass: 'accent',
+  },
+  team: {
+    title: 'Team SLA Health',
+    problem: 'Team-level SLA performance was siloed across managers — no single view to compare queues and spot underperforming teams early.',
+    solution: 'Aggregated compliance score per team, updated every hour. Triggers coaching recommendations when score drops below 80%.',
+    metric: 'Team comparison in 1 view vs. 5 manual reports',
+    metricClass: 'blue',
+  },
+  breach: {
+    title: 'Top Breach Causes',
+    problem: 'RCA for SLA breaches took 24+ hours of manual log analysis, making patterns invisible until end-of-week reviews.',
+    solution: 'AI auto-classifies breach root cause at ticket close using agent notes + resolution path. Surfaces top causes weekly automatically.',
+    metric: 'RCA cycle time: 24h → 2h',
+    metricClass: 'accent',
+  },
+  trend: {
+    title: '7-Day Compliance Trend',
+    problem: 'Leaders had no longitudinal view of SLA health — only today\'s number, no context for whether things were improving or declining.',
+    solution: 'Rolling 7-day trend with target reference line. Drops trigger automated leadership alert with likely root cause attached.',
+    metric: 'Weekly leadership report time: 2h → 15 min',
+    metricClass: 'blue',
+  },
+  alerts: {
+    title: 'AI Alert Feed',
+    problem: 'Escalations were reactive — a manager would only know about a P1 breach after the SLA window had already closed.',
+    solution: 'Predictive alert engine fires when ticket hits 70% SLA consumed. Severity-tiered with suppression logic to prevent alert fatigue.',
+    metric: 'P1 proactive catch rate target: 100%',
+    metricClass: 'accent',
+  },
+};
+
+let popoverOpen = false;
+
+function showInsight(e, key) {
+  e.stopPropagation();
+  const pop = document.getElementById('insightPop');
+  const data = insightData[key];
+  document.getElementById('pop-title').textContent = data.title;
+  document.getElementById('pop-body').innerHTML = `
+    <div class="pop-row">
+      <div class="pop-row-label">User Problem</div>
+      <div class="pop-row-val">${data.problem}</div>
+    </div>
+    <div class="pop-row">
+      <div class="pop-row-label">AI Solution</div>
+      <div class="pop-row-val">${data.solution}</div>
+    </div>
+    <div class="pop-row">
+      <div class="pop-row-label">Key Success Metric</div>
+      <div class="pop-row-val ${data.metricClass}">→ ${data.metric}</div>
+    </div>
+  `;
+
+  // Position near click
+  const rect = e.target.getBoundingClientRect();
+  const vw = window.innerWidth;
+  let left = rect.left + 24;
+  if (left + 310 > vw) left = rect.left - 320;
+  let top = rect.bottom + 8;
+  if (top + 260 > window.innerHeight) top = rect.top - 270;
+
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  pop.classList.add('visible');
+  popoverOpen = true;
+}
+
+function closePopover() {
+  document.getElementById('insightPop').classList.remove('visible');
+  popoverOpen = false;
+}
+
+document.addEventListener('click', (e) => {
+  if (popoverOpen && !e.target.closest('.insight-popover') && !e.target.closest('.insight-btn')) {
+    closePopover();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeDrawer(); closePopover(); }
+});
+
+// ─── THEME TOGGLE ─────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-theme');
+  document.getElementById('themeToggle').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('sla-theme', isLight ? 'light' : 'dark');
+}
+
+(function() {
+  const saved = localStorage.getItem('sla-theme');
+  if (saved === 'light') {
+    document.body.classList.add('light-theme');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
+
+window.addEventListener('resize', drawChart);
+
+// Compliance KPI jitter
+setInterval(() => {
+  const v = (94 + Math.random() * 1.5).toFixed(1);
+  document.getElementById('kpi-compliance').textContent = v + '%';
+}, 8000);
+</script>
+</body>
+</html>
